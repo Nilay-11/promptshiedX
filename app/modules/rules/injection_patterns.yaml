@@ -1,12 +1,33 @@
-# Starter pattern rules for the first-pass regex/keyword scanner (Ch. 6.2).
+# Pattern rules for the first-pass regex/keyword scanner (Ch. 6.2).
 # severity: 0-100, contributes to risk_scoring.pattern_severity
+
 - id: ignore-previous-instructions
   pattern: "(?i)ignore (all|any|the)? ?previous instructions"
   category: prompt_injection
   severity: 80
 
+- id: ignore-above-instructions
+  pattern: "(?i)ignore (all|any|the)? ?(above|prior|earlier) instructions"
+  category: prompt_injection
+  severity: 80
+
+- id: disregard-instructions
+  pattern: "(?i)disregard (all|any|the)? ?(previous|prior|above)? ?instructions"
+  category: prompt_injection
+  severity: 75
+
+- id: forget-instructions
+  pattern: "(?i)forget (everything|all) (you('| ha)ve been told|above)"
+  category: prompt_injection
+  severity: 75
+
 - id: reveal-system-prompt
-  pattern: "(?i)(reveal|show|print|output) (the )?(system|hidden) prompt"
+  pattern: "(?i)(reveal|show|print|output|tell me|what is) (the |your |hidden )+(original )?(system|hidden) prompt"
+  category: prompt_extraction
+  severity: 85
+
+- id: repeat-instructions-verbatim
+  pattern: "(?i)(repeat|print|output) (your|the) (instructions|prompt) (verbatim|exactly|word for word)"
   category: prompt_extraction
   severity: 85
 
@@ -16,18 +37,43 @@
   severity: 90
 
 - id: you-are-now
-  pattern: "(?i)\\byou are now\\b.{0,40}\\b(unfiltered|unlocked|free)\\b"
+  pattern: "(?i)\\byou are now\\b.{0,40}\\b(unfiltered|unlocked|free|unrestricted)\\b"
   category: jailbreak
   severity: 75
 
+- id: pretend-no-rules
+  pattern: "(?i)pretend (you have |you're |you are )?no (rules|restrictions|guidelines|limitations)"
+  category: jailbreak
+  severity: 80
+
+- id: hypothetical-jailbreak
+  pattern: "(?i)in a (hypothetical|fictional) (scenario|world|story)( where)? (there are|with) no (rules|restrictions|laws)"
+  category: jailbreak
+  severity: 70
+
 - id: bypass-safety
-  pattern: "(?i)(bypass|disable|turn off) (safety|content) (restrictions|filters|policy)"
+  pattern: "(?i)(bypass|disable|turn off|circumvent) (safety|content) (restrictions|filters|policy|guidelines)"
   category: prompt_injection
   severity: 85
 
 - id: role-override
-  pattern: "(?i)\\bnew instructions\\b.{0,30}\\b(override|replace)\\b"
+  pattern: "(?i)\\bnew instructions\\b.{0,30}\\b(override|replace|supersede)\\b"
   category: agent_manipulation
+  severity: 70
+
+- id: system-role-injection
+  pattern: "(?i)\\[?(system|SYSTEM)\\]?\\s*:\\s*(you (are|must|will)|new instructions)"
+  category: agent_manipulation
+  severity: 75
+
+- id: end-of-prompt-marker
+  pattern: "(?i)(end of (system )?prompt|---\\s*end\\s*---|\\[/?INST\\])"
+  category: agent_manipulation
+  severity: 60
+
+- id: extraction-via-translation
+  pattern: "(?i)(translate|repeat) (your|the) (system prompt|instructions) (into|in|to) \\w+"
+  category: prompt_extraction
   severity: 70
 
 # Add project-specific / dataset-derived rules here as you collect attack
