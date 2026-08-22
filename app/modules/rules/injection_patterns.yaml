@@ -75,6 +75,3 @@
   pattern: "(?i)(translate|repeat) (your|the) (system prompt|instructions) (into|in|to) \\w+"
   category: prompt_extraction
   severity: 70
-
-# Add project-specific / dataset-derived rules here as you collect attack
-# samples (Chapter 10 datasets: AdvBench, Prompt-Injection-Mixed-Techniques-2024).
