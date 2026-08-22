@@ -1,0 +1,34 @@
+# Starter pattern rules for the first-pass regex/keyword scanner (Ch. 6.2).
+# severity: 0-100, contributes to risk_scoring.pattern_severity
+- id: ignore-previous-instructions
+  pattern: "(?i)ignore (all|any|the)? ?previous instructions"
+  category: prompt_injection
+  severity: 80
+
+- id: reveal-system-prompt
+  pattern: "(?i)(reveal|show|print|output) (the )?(system|hidden) prompt"
+  category: prompt_extraction
+  severity: 85
+
+- id: dan-jailbreak
+  pattern: "(?i)\\bact as (an? )?(DAN|unrestricted|jailbroken) (AI|assistant)\\b"
+  category: jailbreak
+  severity: 90
+
+- id: you-are-now
+  pattern: "(?i)\\byou are now\\b.{0,40}\\b(unfiltered|unlocked|free)\\b"
+  category: jailbreak
+  severity: 75
+
+- id: bypass-safety
+  pattern: "(?i)(bypass|disable|turn off) (safety|content) (restrictions|filters|policy)"
+  category: prompt_injection
+  severity: 85
+
+- id: role-override
+  pattern: "(?i)\\bnew instructions\\b.{0,30}\\b(override|replace)\\b"
+  category: agent_manipulation
+  severity: 70
+
+# Add project-specific / dataset-derived rules here as you collect attack
+# samples (Chapter 10 datasets: AdvBench, Prompt-Injection-Mixed-Techniques-2024).

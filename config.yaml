@@ -1,0 +1,56 @@
+# PromptShield X — runtime configuration
+# Env vars in .env override the risk thresholds below at runtime.
+
+app:
+  name: PromptShield X
+  version: 0.1.0
+
+modules:
+  sanitizer:
+    enabled: true
+    strip_html: true
+    strip_markdown_artifacts: true
+    normalize_unicode: true
+  pattern_scanner:
+    enabled: true
+    rules_file: app/modules/rules/injection_patterns.yaml
+  semantic_classifier:
+    enabled: true
+    model: distilbert-base-uncased          # fine-tune on injection dataset
+    zero_shot_model: facebook/bart-large-mnli
+    labels: [safe, prompt_injection, jailbreak, prompt_extraction, agent_manipulation]
+  chunk_scanner:
+    enabled: true
+    max_chunk_tokens: 512
+  anomaly_detector:
+    enabled: true
+    embedding_model: sentence-transformers/all-MiniLM-L6-v2
+    method: isolation_forest
+    contamination: 0.05
+  reliability_filter:
+    enabled: true
+    min_source_agreement: 0.6
+  evaluator_llm:
+    enabled: true
+    mode: per_chunk_and_response          # per_chunk | response_only | both
+  isolated_context_engine:
+    enabled: true
+  adaptive_learning:
+    enabled: false                        # turn on once you have logged attack data
+
+risk_scoring:
+  weights:
+    pattern_severity: 0.20
+    classifier_confidence: 0.25
+    chunk_risk: 0.20
+    reliability_score: 0.15
+    anomaly_score: 0.20
+  thresholds:
+    pass_max: 30
+    rewrite_max: 65
+    # anything above rewrite_max => BLOCK
+
+logging:
+  audit_db: data/logs/promptshield.db
+  json_log_dir: data/logs/
+  retain_days: 90

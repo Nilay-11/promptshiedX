@@ -1,0 +1,29 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Env / secrets
+.env
+
+# Data / logs (contains audit data, don't commit)
+data/logs/*.db
+data/logs/*.json
+data/datasets/*
+
+# HuggingFace / model cache
+.cache/
+*.bin
+*.safetensors
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# fine-tuned model weights pulled from Colab (large binary files)
+app/modules/weights/*
+!app/modules/weights/.gitkeep
