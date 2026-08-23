@@ -20,3 +20,28 @@ class AnalyzeResponse(BaseModel):
     ]
     details: str
     rewritten_prompt: Optional[str] = None
+
+
+# --- Added for /analyze-rag (Person B — minimal RAG path) ---
+
+class ChunkRiskResult(BaseModel):
+    index: int
+    chunk_preview: str
+    risk_score: int
+    category: Literal[
+        "safe",
+        "prompt_injection",
+        "jailbreak",
+        "prompt_extraction",
+        "agent_manipulation",
+    ]
+    action: Literal["PASS", "REWRITE", "BLOCK"]
+    pattern_matches: list[str]  # rule ids from pattern_scanner, e.g. ["ignore_instructions_v1"]
+    classifier_confidence: float
+
+
+class AnalyzeRagResponse(BaseModel):
+    total_chunks: int
+    overall_risk_score: int
+    overall_action: Literal["PASS", "REWRITE", "BLOCK"]
+    chunks: list[ChunkRiskResult]

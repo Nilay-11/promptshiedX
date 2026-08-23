@@ -3,10 +3,26 @@ API routes for PromptShield X.
 
 Pipeline: sanitizer (6.1) -> pattern scanner (6.2) -> semantic classifier
 (6.3) -> risk engine (6.9) -> action engine (6.10).
+
+/analyze-rag (Person B — minimal RAG path): runs the SAME per-item pipeline
+(sanitizer -> pattern scanner -> semantic classifier -> risk engine) once per
+retrieved chunk, instead of the prompt as a whole. No new detection model —
+chunk_scanner / anomaly_detector / reliability_filter / evaluator_llm
+(6.4-6.8) are explicitly out of scope for this pass; overall verdict is
+currently just "riskiest chunk wins," which is a simplification standing in
+for the reliability/consensus filter documented as future work.
+
+NOTE: semantic_classifier is a zero-shot HF pipeline (~0.5-1.5s/call on CPU).
+/analyze-rag latency scales linearly with chunk count as a result.
 """
 
 from fastapi import APIRouter
-from app.models.schemas import AnalyzeRequest, AnalyzeResponse
+from app.models.schemas import (
+    AnalyzeRequest,
+    AnalyzeResponse,
+    AnalyzeRagResponse,
+    ChunkRiskResult,
+)
 from app.modules.sanitizer import sanitize
 from app.modules.pattern_scanner import scan_prompt
 from app.modules.semantic_classifier import classify_prompt
@@ -41,13 +57,50 @@ def analyze_prompt(payload: AnalyzeRequest):
     )
 
 
-@router.post("/analyze-rag")
+@router.post("/analyze-rag", response_model=AnalyzeRagResponse)
 def analyze_rag_context(payload: AnalyzeRequest):
     """
-    Indirect (RAG) prompt injection check (Chapters 6.4-6.8).
-    TODO: call chunk_scanner -> anomaly_detector -> reliability_filter -> evaluator_llm
+    Indirect (RAG) prompt injection check — minimal path.
+    Reuses sanitizer + pattern_scanner + semantic_classifier + risk_engine
+    per chunk. Full version (6.4-6.8: chunk scanner, anomaly detector,
+    reliability filter, evaluator LLM) is documented as future work.
     """
-    return {"status": "not_implemented"}
+    chunks = payload.retrieved_chunks or []
+
+    chunk_results: list[ChunkRiskResult] = []
+    for i, chunk in enumerate(chunks):
+        clean_chunk = sanitize(chunk)
+
+        pattern_result = scan_prompt(clean_chunk)
+        classification = classify_prompt(clean_chunk)
+        scored = compute_risk_score(pattern_result["severity"], classification)
+
+        chunk_results.append(
+            ChunkRiskResult(
+                index=i,
+                chunk_preview=(clean_chunk[:120] + "...") if len(clean_chunk) > 120 else clean_chunk,
+                risk_score=scored["risk_score"],
+                category=scored["category"],
+                action=scored["action"],
+                pattern_matches=[m["id"] for m in pattern_result["matches"]],
+                classifier_confidence=classification["confidence"],
+            )
+        )
+
+    if chunk_results:
+        riskiest = max(chunk_results, key=lambda c: c.risk_score)
+        overall_risk_score = riskiest.risk_score
+        overall_action = riskiest.action
+    else:
+        overall_risk_score = 0
+        overall_action = "PASS"
+
+    return AnalyzeRagResponse(
+        total_chunks=len(chunk_results),
+        overall_risk_score=overall_risk_score,
+        overall_action=overall_action,
+        chunks=chunk_results,
+    )
 
 
 @router.get("/admin/logs")
