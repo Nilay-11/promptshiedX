@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptShield X — Audit Dashboard</title>
+  <link rel="stylesheet" href="/dashboard/static/css/dashboard.css">
+</head>
+<body>
+  
+  <header>
+    <div class="header-container">
+      <div class="logo">
+        <div class="logo-icon">🛡️</div>
+        <div class="logo-text">PromptShield X</div>
+      </div>
+      <div class="header-actions">
+        <button id="refresh-btn" class="btn-refresh">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
+          </svg>
+          Sync Logs
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Stats Row -->
+    <section class="stats-grid">
+      <div class="stat-card total">
+        <div class="stat-header">
+          <span class="stat-title">Total Requests</span>
+          <span class="stat-icon">📊</span>
+        </div>
+        <div>
+          <div id="stat-total" class="stat-value">-</div>
+          <span class="stat-desc">Analyzed queries in SQLite db</span>
+        </div>
+      </div>
+
+      <div class="stat-card pass">
+        <div class="stat-header">
+          <span class="stat-title">Pass Rate</span>
+          <span class="stat-icon">🟢</span>
+        </div>
+        <div>
+          <div id="stat-pass" class="stat-value">-</div>
+          <span class="stat-desc">Requests allowed directly</span>
+        </div>
+      </div>
+
+      <div class="stat-card rewrite">
+        <div class="stat-header">
+          <span class="stat-title">Rewrite Rate</span>
+          <span class="stat-icon">🟡</span>
+        </div>
+        <div>
+          <div id="stat-rewrite" class="stat-value">-</div>
+          <span class="stat-desc">Sanitized pattern matches</span>
+        </div>
+      </div>
+
+      <div class="stat-card block">
+        <div class="stat-header">
+          <span class="stat-title">Block Rate</span>
+          <span class="stat-icon">🔴</span>
+        </div>
+        <div>
+          <div id="stat-block" class="stat-value">-</div>
+          <span class="stat-desc">Malicious attempts blocked</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Logs List -->
+    <section class="logs-section">
+      <div class="logs-header">
+        <h2 class="logs-title">Latest Audit Logs</h2>
+        <span id="logs-count" class="logs-count-badge">0 visible</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 15%">Timestamp (Local)</th>
+              <th style="width: 12%">User ID</th>
+              <th style="width: 35%">User Prompt</th>
+              <th style="width: 10%">Risk Score</th>
+              <th style="width: 13%">Category</th>
+              <th style="width: 10%">Action Taken</th>
+              <th style="width: 5%">Details</th>
+            </tr>
+          </thead>
+          <tbody id="logs-table-body">
+            <!-- Dynamically populated via JS -->
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 2rem;">
+                <div class="spinner"></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Detail Modal -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title" class="modal-title">Log Details</h3>
+        <button id="modal-close" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <pre id="modal-text" class="text-details"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script src="/dashboard/static/js/dashboard.js"></script>
+</body>
+</html>

@@ -17,6 +17,8 @@ NOTE: semantic_classifier is a zero-shot HF pipeline (~0.5-1.5s/call on CPU).
 """
 
 from fastapi import APIRouter
+from fastapi.responses import HTMLResponse
+import os
 from app.models.schemas import (
     AnalyzeRequest,
     AnalyzeResponse,
@@ -28,6 +30,7 @@ from app.modules.pattern_scanner import scan_prompt
 from app.modules.semantic_classifier import classify_prompt
 from app.core.risk_engine import compute_risk_score
 from app.core.action_engine import apply_action
+from app.core.init_db import log_audit
 
 router = APIRouter()
 
@@ -47,6 +50,18 @@ def analyze_prompt(payload: AnalyzeRequest):
         f"classifier_confidence={classification['confidence']}, "
         f"removed_fragments={outcome['removed_fragments']}"
     )
+
+    try:
+        log_audit(
+            user_id=payload.user_id,
+            prompt=payload.prompt,
+            risk_score=scored["risk_score"],
+            attack_category=scored["category"],
+            action_taken=scored["action"],
+            detection_evidence=details,
+        )
+    except Exception as e:
+        print(f"Failed to log audit entry: {e}")
 
     return AnalyzeResponse(
         action=scored["action"],
@@ -106,4 +121,51 @@ def analyze_rag_context(payload: AnalyzeRequest):
 @router.get("/admin/logs")
 def get_audit_logs(limit: int = 50):
     """Backs the audit dashboard (Chapter 6.12)."""
-    return {"status": "not_implemented", "logs": []}
+    import sqlite3
+    from app.core.init_db import DB_PATH
+    
+    if not DB_PATH.exists():
+        return {"status": "ok", "logs": []}
+        
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, timestamp, user_id, prompt, risk_score, attack_category, action_taken, detection_evidence
+            FROM audit_log
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,)
+        )
+        rows = cursor.fetchall()
+        
+        logs = []
+        for row in rows:
+            logs.append({
+                "id": row[0],
+                "timestamp": row[1],
+                "user_id": row[2],
+                "prompt": row[3],
+                "risk_score": row[4],
+                "attack_category": row[5],
+                "action_taken": row[6],
+                "detection_evidence": row[7]
+            })
+        return {"status": "ok", "logs": logs}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "logs": []}
+    finally:
+        conn.close()
+
+
+@router.get("/dashboard", response_class=HTMLResponse)
+def get_dashboard():
+    """Serves the dashboard HTML page."""
+    template_path = os.path.join("dashboard", "templates", "dashboard.html")
+    if not os.path.exists(template_path):
+        return HTMLResponse("<h1>Dashboard HTML template not found.</h1>", status_code=404)
+    with open(template_path, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    return HTMLResponse(content=html_content)
