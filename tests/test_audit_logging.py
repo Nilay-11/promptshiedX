@@ -122,3 +122,10 @@ def test_dashboard_endpoint_serves_html():
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert "PromptShield X" in response.text
+
+
+def test_root_redirects_to_dashboard():
+    response = client.get("/", follow_redirects=False)
+    assert response.status_code == 307
+    assert response.headers["location"] == "/dashboard"
+

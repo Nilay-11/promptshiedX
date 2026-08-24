@@ -17,10 +17,17 @@ app = FastAPI(
     version="0.1.0",
 )
 
+from fastapi.responses import RedirectResponse
+
 app.include_router(routes.router)
 
 # Serve the audit dashboard's static assets (Chart.js, css, js)
 app.mount("/dashboard/static", StaticFiles(directory="dashboard/static"), name="dashboard-static")
+
+
+@app.get("/")
+def root_redirect():
+    return RedirectResponse(url="/dashboard")
 
 
 @app.get("/health")
