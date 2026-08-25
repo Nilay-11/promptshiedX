@@ -4,10 +4,6 @@ uvicorn[standard]==0.30.6
 pydantic==2.9.2
 python-multipart==0.0.9
 
-# --- NLP / ML ---
-scikit-learn==1.5.2          # Isolation Forest
-numpy==1.26.4
-
 # --- LLM providers (evaluator + target LLM calls) ---
 openai==1.47.1
 anthropic==0.34.2
@@ -26,16 +22,9 @@ python-dotenv==1.0.1
 # --- Dashboard support ---
 jinja2==3.1.4
 
-# --- Testing ---
-pytest==8.3.3
-pytest-asyncio==0.24.0
+# --- HTTP client ---
 httpx==0.27.2
-
-# --- Dev tooling ---
-black==24.8.0
-ruff==0.6.8
 
 # --- Dashboard & Streamlit ---
 pandas
 streamlit
-
